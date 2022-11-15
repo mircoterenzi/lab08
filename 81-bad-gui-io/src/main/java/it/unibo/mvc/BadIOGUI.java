@@ -41,10 +41,22 @@ public class BadIOGUI {
     public BadIOGUI() {
         final JPanel canvas = new JPanel();
         canvas.setLayout(new BorderLayout());
+        
+        /* Ex 01.01 */
+        final JPanel internalCanvas = new JPanel();
+        internalCanvas.setLayout(new BoxLayout(internalCanvas, BoxLayout.X_AXIS));
+
         final JButton write = new JButton("Write on file");
-        canvas.add(write, BorderLayout.CENTER);
+        internalCanvas.add(write, BorderLayout.CENTER);
+        
+        /* Ex 01.02 */
+        final JButton read = new JButton("Read the file");
+        internalCanvas.add(read);
+        
+        canvas.add(internalCanvas);
         frame.setContentPane(canvas);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
         /*
          * Handlers
          */
@@ -66,6 +78,23 @@ public class BadIOGUI {
                 }
             }
         });
+
+        /* Ex 01.03 */
+        read.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                try {
+                    final List<String> fileInput = Files.readAllLines(new File(PATH).toPath());
+                    for (final String curr : fileInput) {
+                        System.out.println(curr);
+                    }
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(frame, e, "Error", JOptionPane.ERROR_MESSAGE);
+                    e.printStackTrace();
+                }
+            }
+
+        });
     }
 
     private void display() {
@@ -81,6 +110,7 @@ public class BadIOGUI {
         final int sw = (int) screen.getWidth();
         final int sh = (int) screen.getHeight();
         frame.setSize(sw / PROPORTION, sh / PROPORTION);
+        frame.pack();
         /*
          * Instead of appearing at (0,0), upper left corner of the screen, this
          * flag makes the OS window manager take care of the default positioning
