@@ -1,15 +1,20 @@
 package it.unibo.mvc;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  */
 public final class DrawNumberApp implements DrawNumberViewObserver {
-    private static final int MIN = 0;
-    private static final int MAX = 100;
-    private static final int ATTEMPTS = 10;
+    private static final String INPUT_NAME = "config.yml";
+
+    private int min;
+    private int max;
+    private int attempts;
 
     private final DrawNumber model;
     private final List<DrawNumberView> views;
@@ -18,16 +23,32 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
      * @param views
      *            the views to attach
      */
-    public DrawNumberApp(final DrawNumberView... views) {
-        /*
-         * Side-effect proof
-         */
+    public DrawNumberApp(final DrawNumberView... views) throws IOException {
         this.views = Arrays.asList(Arrays.copyOf(views, views.length));
         for (final DrawNumberView view: views) {
             view.setObserver(this);
             view.start();
         }
-        this.model = new DrawNumberImpl(MIN, MAX, ATTEMPTS);
+        try (final var input = new BufferedReader(new InputStreamReader(ClassLoader.getSystemResourceAsStream(INPUT_NAME)))) {
+            for (String currString = input.readLine(); currString != null; currString = input.readLine()) {
+                final String[] parts = currString.split(":");
+                if(parts.length == 2) {
+                    final int value = Integer.parseInt(parts[1].trim()); //nota: .trim() rimuove gli spazi vuoti dalla stringa
+                    if(parts[0].contains("minimum")) {
+                        min = value;
+                    } else if(parts[0].contains("maximum")) {
+                        max = value;
+                    } else if(parts[0].contains("attempts")) {
+                        attempts = value;
+                    } else {
+                        throw new IOException("Error with the config settings name");
+                    }
+                } else {
+                    throw new IOException("Error with reading the config file");
+                }
+            }
+        } 
+        this.model = new DrawNumberImpl(min, max, attempts);
     }
 
     @Override
@@ -65,8 +86,11 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
      *            ignored
      * @throws FileNotFoundException 
      */
-    public static void main(final String... args) throws FileNotFoundException {
-        new DrawNumberApp(new DrawNumberViewImpl());
+    public static void main(final String... args) throws FileNotFoundException, IOException {
+        new DrawNumberApp(new DrawNumberViewImpl(),
+            new DrawNumberViewImpl(),
+            new PrintStreamView("output.log"),
+            new PrintStreamView(System.out));
     }
 
 }
